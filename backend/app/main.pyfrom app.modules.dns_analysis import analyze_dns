@@ -1,0 +1,114 @@
+import re
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field, field_validator
+
+from app.database import Base, engine, SessionLocal, check_database
+from app.models import Scan
+from app.modules.domain_intelligence import lookup_domain
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="CYBROT OSINT API",
+    description="Local Website Intelligence and OSINT Engine",
+    version="0.1.0"
+)
+
+class ScanRequest(BaseModel):
+    domain: str = Field(min_length=3, max_length=253)
+    authorized: bool
+
+    @field_validator("domain")
+    @classmethod
+    def validate_domain(cls, value):
+        value = value.strip().lower()
+        pattern = r"^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$"
+        if not re.fullmatch(pattern, value):
+            raise ValueError("Enter a valid domain name")
+        return value
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to CYBROT OSINT API", "status": "running"}
+
+@app.get("/api/v1/health")
+def health():
+    return {
+        "status": "healthy",
+        "application": "CYBROT OSINT",
+        "engine": "online",
+        "version": "0.1.0"
+    }
+
+@app.get("/api/v1/database/status")
+def database_status():
+    check_database()
+    return {"database": "connected", "type": "SQLite", "status": "healthy"}
+
+@app.get("/api/v1/modules")
+def modules():
+    return {
+        "modules": [
+            "Domain Intelligence",
+            "DNS Analysis",
+            "Subdomain Discovery",
+            "SSL / TLS",
+            "Technology Stack",
+            "Infrastructure",
+            "Security Headers",
+            "Email Security",
+            "Threat Intelligence"
+        ]
+    }
+
+@app.get("/api/v1/domain/{domain}")
+def domain_intelligence(domain: str):
+    try:
+        return lookup_domain(domain)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error))
+
+@app.post("/api/v1/scans")
+def create_scan(request: ScanRequest):
+    if not request.authorized:
+        raise HTTPException(status_code=403, detail="Authorization is required")
+
+    db = SessionLocal()
+    try:
+        scan = Scan(domain=request.domain, status="queued")
+        db.add(scan)
+        db.commit()
+        db.refresh(scan)
+
+        return {
+            "scan_id": scan.id,
+            "domain": scan.domain,
+            "status": scan.status,
+            "message": "Scan request saved. Collection engine is pending."
+        }
+    finally:
+        db.close()
+
+@app.get("/api/v1/scans")
+def get_scans():
+    db = SessionLocal()
+    try:
+        scans = db.query(Scan).order_by(Scan.id.desc()).all()
+        return {
+            "total": len(scans),
+            "scans": [
+                {
+                    "scan_id": scan.id,
+                    "domain": scan.domain,
+                    "status": scan.status,
+                    "created_at": scan.created_at.isoformat()
+                }
+                for scan in scans
+            ]
+        }
+    finally:
+        db.close()
+
