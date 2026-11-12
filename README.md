@@ -406,4 +406,4 @@ Cybrot OSINT is developed for educational, research, and authorized cybersecurit
 
 ---
 
-**CYBROT OSINT — Discover. Analyze. Secure.**
+**CYBROT OSINT — Discover. Analyze. Secure.***
