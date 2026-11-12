@@ -3,7 +3,7 @@
 
 Cybrot OSINT is a web-based Open-Source Intelligence (OSINT) platform designed to collect, analyze, and present publicly available information about domains and their associated infrastructure.
 
-The platform provides a centralized dashboard for performing domain intelligence gathering, infrastructure analysis, security assessments, and generating PDF reports.
+The platform provides a centralized dashboard for performing domain intelligence gathering, infrastructure analysis, security assessments, and generating PDF 
 
 ---
 
