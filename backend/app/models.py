@@ -1,6 +1,9 @@
+
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Text
+
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
 from app.database import Base
+
 
 class Scan(Base):
     __tablename__ = "scans"
@@ -8,5 +11,6 @@ class Scan(Base):
     id = Column(Integer, primary_key=True, index=True)
     domain = Column(String(253), nullable=False)
     status = Column(String(30), default="queued")
+    authorized = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     results = Column(Text, nullable=True)

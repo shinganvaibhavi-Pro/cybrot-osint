@@ -397,7 +397,6 @@ Contributions, suggestions, and improvements are welcome.
 ## Repository
 
 **GitHub:** https://github.com/shinganvaibhavi-Pro/cybrot-osint
-.
 
 ---
 

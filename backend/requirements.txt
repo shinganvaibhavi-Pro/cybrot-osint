@@ -4,3 +4,4 @@ sqlalchemy
 pydantic
 reportlab
 dnspython>=2.6,<3
+certifi>=2026.10.23

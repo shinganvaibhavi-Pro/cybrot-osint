@@ -3,6 +3,8 @@ import ssl
 import ipaddress
 import hashlib
 from datetime import datetime, timezone
+import certifi
+
 
 def analyze_ssl(domain: str):
     domain = domain.strip().lower()
@@ -10,7 +12,9 @@ def analyze_ssl(domain: str):
     if not domain or len(domain) > 253:
         raise ValueError("Invalid domain")
 
-    context = ssl.create_default_context()
+    context = ssl.create_default_context(
+    cafile=certifi.where()
+    )
 
     try:
         addresses = socket.getaddrinfo(

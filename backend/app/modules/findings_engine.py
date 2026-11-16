@@ -276,13 +276,9 @@ def analyze_findings(module_results):
 
             normalized_record = record.lower().replace(" ", "")
 
-            tags = {}
-            for item in normalized_record.split(";"):
-                key, separator, value = item.partition("=")
-                if separator:
-                    tags[key.strip()] = value.strip()
-
-            if tags.get("v") == "dmarc1" and tags.get("p") == "none":
+            if "v=dmarc1" in normalized_record and (
+                "p=none" in normalized_record
+            ):
                 _add_finding(
                     findings,
                     "EMAIL-DMARC-MONITORING",

@@ -23,11 +23,3 @@ out/
 *.sqlite
 *.sqlite3
 *.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Local generated evidence and reports
-/backend/cybrot_scan_*.pdf
-/backend/json

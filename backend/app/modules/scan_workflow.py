@@ -1,6 +1,8 @@
+
 from app.modules.domain_intelligence import lookup_domain
 from app.modules.dns_analysis import analyze_dns
 from app.modules.subdomain_discovery import discover_subdomains
+from app.modules.live_host_detection import detect_live_hosts
 from app.modules.ssl_analysis import analyze_ssl
 from app.modules.technology_stack import analyze_technology
 from app.modules.infrastructure import analyze_infrastructure
@@ -8,7 +10,6 @@ from app.modules.security_headers import analyze_headers
 from app.modules.email_security import analyze_email_security
 from app.modules.threat_intelligence import run_threat_intelligence
 from app.modules.findings_engine import analyze_findings
-
 
 def run_scan(domain):
     modules = {
@@ -45,12 +46,43 @@ def run_scan(domain):
                 "error": str(error)
             }
 
+    # Live Host Detection depends on discovered subdomains.
+    subdomain_result = results.get("subdomain_discovery", {})
+
+    if subdomain_result.get("status") == "success":
+        assets = (
+            subdomain_result.get("data", {}).get("assets", [])
+        )
+
+        try:
+            live_data = detect_live_hosts(domain, assets)
+
+            results["live_host_detection"] = {
+                "status": live_data.get("status", "success"),
+                "data": live_data
+            }
+
+        except Exception as error:
+            results["live_host_detection"] = {
+                "status": "failed",
+                "error": str(error)
+            }
+    else:
+        results["live_host_detection"] = {
+            "status": "skipped",
+            "error": "Subdomain discovery was unsuccessful."
+        }
+
+    # Count only fully successful modules.
     successful = sum(
-        1 for result in results.values()
+        1
+        for result in results.values()
         if result["status"] == "success"
     )
 
-    if successful == len(modules):
+    total_modules = len(results)
+
+    if successful == total_modules:
         overall_status = "completed"
     elif successful > 0:
         overall_status = "partial"
@@ -59,6 +91,7 @@ def run_scan(domain):
 
     try:
         findings = analyze_findings(results)
+
     except Exception as error:
         findings = {
             "status": "failed",
@@ -71,17 +104,14 @@ def run_scan(domain):
                 "Informational": 0,
             },
             "findings": [],
-            "notes": [
-                "Findings analysis could not be completed.",
-                str(error),
-            ],
+            "error": str(error),
         }
 
     return {
         "domain": domain,
         "status": overall_status,
-        "total_modules": len(modules),
+        "total_modules": total_modules,
         "successful_modules": successful,
         "results": results,
-        "findings": findings
+        "findings": findings,
     }
